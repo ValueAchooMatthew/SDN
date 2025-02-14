@@ -64,14 +64,15 @@ impl RemoteController {
 
           if let Some(ip_addr_of_connected_router) = self_ref.does_any_packet_switch_connect_directly_to_ip_addr(&packet_metadata) {
 
+            // Change to send to some pre-determined port instead of hard coding
             let updated_ps_flow_table = self_ref.current_packet_switch_flow_tables
               .entry(socket.ip())
               .and_modify(|ft| {
-                ft.add_entry_to_flow_table(packet_metadata.clone(), Action::FORWARD(ip_addr_of_connected_router));
+                ft.add_entry_to_flow_table(packet_metadata.clone(), Action::FORWARDTOROUTER((ip_addr_of_connected_router, 9002)));
               })
               .or_insert_with(|| {
                 let mut ft = FlowTable::new();
-                ft.add_entry_to_flow_table(packet_metadata, Action::FORWARD(ip_addr_of_connected_router));
+                ft.add_entry_to_flow_table(packet_metadata, Action::FORWARDTOROUTER((ip_addr_of_connected_router, 9002)));
                 return ft;
               });
 
@@ -88,21 +89,21 @@ impl RemoteController {
           } else {
 
             let updated_ps_flow_table = self_ref.current_packet_switch_flow_tables
-            .entry(socket.ip())
-            .and_modify(|ft| {
-              ft.add_entry_to_flow_table(packet_metadata.clone(), Action::FORWARD(packet_metadata.get_dest_ip_addr()));
-            })
-            .or_insert_with(|| {
-              let mut ft = FlowTable::new();
-              ft.add_entry_to_flow_table(packet_metadata.clone(), Action::FORWARD(packet_metadata.get_dest_ip_addr()));
-              return ft;
-            });
+              .entry(socket.ip())
+              .and_modify(|ft| {
+                ft.add_entry_to_flow_table(packet_metadata.clone(), Action::FORWARDTODESTINATIONHOST((packet_metadata.get_dest_ip_addr(), packet_metadata.get_dest_port())));
+              })
+              .or_insert_with(|| {
+                let mut ft = FlowTable::new();
+                ft.add_entry_to_flow_table(packet_metadata.clone(), Action::FORWARDTODESTINATIONHOST((packet_metadata.get_dest_ip_addr(), packet_metadata.get_dest_port())));
+                return ft;
+              });
 
             let ft_as_vec = serde_json::to_vec(
               &RemoteControllerResponse::FLOWTABLEUPDATED(
-                updated_ps_flow_table.clone(), 
-                Action::DISCARD)
-              )?;
+                updated_ps_flow_table.clone(),
+                Action::FORWARDTODESTINATIONHOST((packet_metadata.get_dest_ip_addr(), 9003))
+              ))?;
 
             stream.write_all(&ft_as_vec)?;
             stream.flush()?;
@@ -132,6 +133,5 @@ impl RemoteController {
     }
     None
   }
-
 
 }
