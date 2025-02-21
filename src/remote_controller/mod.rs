@@ -1,9 +1,7 @@
+use crate::{packet_structs::PacketMetaData, packet_switch::{flow_table::FlowTable, packet_switch_actions::Action}};
 use std::{collections::{HashMap, HashSet}, io::{Error, Read, Write}, net::{IpAddr, Shutdown, TcpListener}, sync::{Arc, Mutex}, thread};
-
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-
-use crate::packet_switch::{FlowTable, PacketMetaData, Action};
 
 #[derive(Clone, Debug)]
 pub struct RemoteController {
