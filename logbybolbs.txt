@@ -1,0 +1,3 @@
+20:34:09 [DEBUG] (4) SDN::packet_switch: Got a packet! PacketMetaData { source_ip: 127.0.0.1, dest_ip: 127.0.0.1, source_mac: [0, 0, 0, 0, 0, 0], dest_mac: [0, 0, 0, 0, 0, 0], source_port: 35092, dest_port: 9003 }
+20:34:09 [DEBUG] (4) SDN::packet_switch: packet message: "Hi!\n", action to take: FORWARDTORC
+20:34:09 [DEBUG] (4) SDN::packet_switch: in loop!

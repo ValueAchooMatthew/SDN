@@ -1,35 +1,26 @@
 #[cfg(test)]
+
+
 mod tests {
   use std::collections::HashSet;
+  use std::fs::File;  
   use std::net::IpAddr;
   use std::net::Ipv4Addr;
-  use std::thread;
-
+  use simplelog::WriteLogger;
   use crate::packet_switch::PacketSwitch;
-  use crate::remote_controller::RemoteController;
+  extern crate simplelog;
 
   #[test]
   fn it_works() {
+    let log_file = File::create("logbybolbs.txt").unwrap();
+    WriteLogger::init(simplelog::LevelFilter::max(), simplelog::Config::default(), log_file).unwrap();
+
     let ps = PacketSwitch::new_without_flow_table(
-      HashSet::from([9000]), 
-      (IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 9001)
+      HashSet::from([9003]), 
+      (IpAddr::V4(Ipv4Addr::new(10, 0, 0, 165)), 9003)   
     );
 
-    let rc = RemoteController::new(HashSet::from([9001]));
-
-    thread::spawn(move || {
-      ps.listen_for_incoming_packets()
+    ps.listen_for_incoming_packets()
       .expect("Aah!");
-    });
-
-    thread::spawn(move || {
-      rc.listen_for_packet_switch_requests()
-      .expect("Yikes!");
-    })
-    .join()
-    .expect("Ah!");
-
-
   }
-
 }

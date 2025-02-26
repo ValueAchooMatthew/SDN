@@ -1,5 +1,6 @@
 use crate::{packet_structs::PacketMetaData, packet_switch::{flow_table::FlowTable, packet_switch_actions::Action}};
 use std::{collections::{HashMap, HashSet}, io::{Error, Read, Write}, net::{IpAddr, Shutdown, TcpListener}, sync::{Arc, Mutex}, thread};
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
@@ -44,9 +45,11 @@ impl RemoteController {
 
       thread::spawn(move || -> Result<(), Error> {
 
-        let listener = TcpListener::bind(String::from("localhost:") +&port.to_string())?;
+        let listener = TcpListener::bind((IpAddr::from([0, 0, 0, 0]), port))?;
         
         while let Ok((mut stream, socket)) = listener.accept() {
+
+          debug!("Got a packet!");
           
           let mut message_from_packet_switch = Vec::with_capacity(1500);
           stream.read_to_end(&mut message_from_packet_switch)?;
@@ -79,7 +82,7 @@ impl RemoteController {
                   updated_ps_flow_table.clone(), 
                   Action::DISCARD)
               )?;
-
+              info!("Updated packet switch's flowtable");
               stream.write_all(&ft_as_vec)?;
               stream.flush()?;
               stream.shutdown(Shutdown::Both)?;
@@ -103,6 +106,7 @@ impl RemoteController {
                 Action::FORWARDTODESTINATIONHOST((packet_metadata.get_dest_ip_addr(), 9003))
               ))?;
 
+            info!("Updated packet switch's flowtable");
             stream.write_all(&ft_as_vec)?;
             stream.flush()?;
             stream.shutdown(Shutdown::Both)?;
